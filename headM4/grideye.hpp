@@ -8,6 +8,7 @@
 #include "mbed.h"
 #include "rtos.h"
 #include "health.hpp"
+#include "CO2.hpp"
 #include "conf.h"
 
 #if ENABLE_RGB_LEDMATRIX

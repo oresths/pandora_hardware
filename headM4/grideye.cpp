@@ -15,6 +15,7 @@ static Thread *tGridEYERight;   ///<Thread pointer for right GridEYE sensor's Gr
 //@}
 
 static Thread *tGridEYEHealth;  ///<Thread pointer for GridEYEHealthTask()
+static Thread *tCO2Health;
 
 void GridEYEInit(I2C *i2c0_obj, I2C *i2c1_obj) {
     //Check comment about sdram in Doxygen main page before using new
@@ -45,6 +46,7 @@ void GridEYEInit(I2C *i2c0_obj, I2C *i2c1_obj) {
     tGridEYELeft = new Thread(GridEYETask, (void *) &temp_sens3);
 
     tGridEYEHealth = new Thread(GridEYEHealthTask);
+    tCO2Health = new Thread(CO2HealthTask);
 
     Thread::wait(5);    //We must wait some time before the function ends or temp_sens? will be destroyed
                         //-> before the threads assign them to local variables. (I tested with 1ms and it was OK)
@@ -216,21 +218,45 @@ void GridEYESchedulerTask(void const *args) {
     //I2C sensors in the same I2C bus have maximum distance ie 50ms in a 100ms loop
     while (true) {
         clearHealthyGridEYE();
+        clearHealthyCO2();
+
+        if (CO2enabled())
+            CO2Trigger();
 
         if (GridEYEenabled(GEYE_CENTER))
             tGridEYECenter->signal_set(GRIDEYE_I2C_SIGNAL);
 
-        Thread::wait(25);
+//        Thread::wait(25);
         if (GridEYEenabled(GEYE_LEFT))
             tGridEYELeft->signal_set(GRIDEYE_I2C_SIGNAL);
 
-        Thread::wait(25);
+        Thread::wait(2);
         if (GridEYEenabled(GEYE_RIGHT))
             tGridEYERight->signal_set(GRIDEYE_I2C_SIGNAL);
 
-        Thread::wait(40);
-        tGridEYEHealth->signal_set(HEALTH_SIGNAL);
+//        Thread::wait(40);
+//        tGridEYEHealth->signal_set(HEALTH_SIGNAL);
 
-        Thread::wait(10);
+//        Thread::wait(10);
+
+//        clearHealthyCO2();
+
+//        if (CO2enabled())
+//            CO2Trigger();
+
+        //The readings in the sensor are calculated every 500ms which is the rate of the infrared source within the
+        //-> sensor. During the cycles when the signals are being tracked, the sensor will not respond to the
+        //-> communication requests. The requests will be queued and dealt with in the next cycle. There is no "flush"
+        //->  command to clear the queue. It is not suggested to pool the sensor more often than 500ms. The time for
+        //-> the sensor to respond may also vary by a few ms depends on the internal operations. @official response
+        //This means it will take a random time up to 500ms for the sensor to answer.
+//        Thread::wait(500);
+
+        Thread::wait(4);  //Timeout time.
+
+        tGridEYEHealth->signal_set(HEALTH_SIGNAL);
+        tCO2Health->signal_set(HEALTH_SIGNAL);
+
+        Thread::wait(2);
     }
 }
