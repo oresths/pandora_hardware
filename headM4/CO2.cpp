@@ -34,12 +34,12 @@ void CO2Trigger() {
     Checksum_lo };
 
     for (int i = 0; i < 7; ++i) {
-        co2uart->putcNB(co2TransmitBuffer[i]);  //Message must be maximum 16 bytes (FIFO size)
+        co2uart->putc(co2TransmitBuffer[i]);  //Message must be maximum 16 bytes (FIFO size)
     }
 }
 
 void RX_isr() {
-    uint8_t CO2recv = co2uart->getcNB();    //Reading UnRBR clears the interrupt. If we don't clear it
+    uint8_t CO2recv = co2uart->getc();    //Reading UnRBR clears the interrupt. If we don't clear it
     //->the ISR would retrigger infinitely.
     CO2queue.put((uint8_t *) CO2recv);
 }

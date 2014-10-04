@@ -79,6 +79,7 @@ public:
      */
     int putcNB(int c) {
         serial_t obj = this->_serial;
+//        while (!serial_writable(&obj));
         obj.uart->THR = c;
         return c;
     }
@@ -93,6 +94,7 @@ public:
      */
     int getcNB() {
         serial_t obj = this->_serial;
+//        while (!serial_readable(&obj));
         return obj.uart->RBR;
     }
 
