@@ -23,7 +23,7 @@ void CO2Init(PinName tx, PinName rx) {
 
     co2uart = new SerialNB(tx, rx);
     co2uart->baud(38400);   //Baud 38400, 8N1
-    co2uart->attach(&RX_isr, Serial::RxIrq);
+//    co2uart->attach(&RX_isr, Serial::RxIrq);
 
     tCO2 = new Thread(CO2ReceiverTask);
     tCO2Health = new Thread(CO2HealthTask);
@@ -36,12 +36,21 @@ void CO2Trigger() {
     for (int i = 0; i < 7; ++i) {
         co2uart->putc(co2TransmitBuffer[i]);  //Message must be maximum 16 bytes (FIFO size)
     }
+
+    uint8_t CO2recv[19];
+    for (int i = 0; i < 15; ++i) {
+        CO2recv[i] = co2uart->getc();
+    }
+
+    for (int i = 0; i < 15; ++i) {
+        CO2queue.put((uint8_t *) CO2recv[i]);
+    }
 }
 
 void RX_isr() {
-    uint8_t CO2recv = co2uart->getc();    //Reading UnRBR clears the interrupt. If we don't clear it
-    //->the ISR would retrigger infinitely.
-    CO2queue.put((uint8_t *) CO2recv);
+//    uint8_t CO2recv = co2uart->getcNB();    //Reading UnRBR clears the interrupt. If we don't clear it
+//    //->the ISR would retrigger infinitely.
+//    CO2queue.put((uint8_t *) CO2recv);
 }
 
 void CO2ReceiverTask(void const *args) {
