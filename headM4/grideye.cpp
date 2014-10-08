@@ -79,14 +79,20 @@ void GridEYETask(void const *args) {
     SPI RGB_LEDMatrix(p5, p6, p7);  /// mosi, miso, sclk
 
 #endif
-
+Timer t;
     while (1) {
         Thread::signal_wait(GRIDEYE_I2C_SIGNAL);
 
+//        t.reset();
+//        t.start();
+
         cmd[0] = GRIDEYE_I2C_THERM_ADDR;
         i2c_lock(i2c_periph_num);
+
         i2c_obj->write(i2c_addr, cmd, 1, true); //Repeated start is true in i2c_obj->write, so it must be true in
         i2c_obj->read(i2c_addr, thermistor_echo, 2, true); //-> the following read, too.
+
+
         i2c_unlock(i2c_periph_num);
 
         if (therm_echo_uint16 & 0x800) {  //if negative
@@ -104,8 +110,13 @@ void GridEYETask(void const *args) {
 
         cmd[0] = GRIDEYE_I2C_TEMP_ADDR;
         i2c_lock(i2c_periph_num);
-        i2c_obj->write(i2c_addr, cmd, 1, true);
-        i2c_obj->read(i2c_addr, temper_echo, 2 * PIXELS_COUNT, true);
+//        t.reset();
+//        t.start();
+        i2c_obj->write(i2c_addr, cmd, 1, false);
+        i2c_obj->read(i2c_addr, temper_echo, 2 * PIXELS_COUNT, false);
+//        t.stop();
+//        if (grideye_num == GEYE_CENTER)
+//        printf("The time taken was %d useconds\n\r", t.read_us());
         i2c_unlock(i2c_periph_num);
 
         for (int i = 0; i < PIXELS_COUNT; ++i) {
@@ -117,6 +128,10 @@ void GridEYETask(void const *args) {
         }
 
         GridEYEvaluesSet(temper_values, grideye_num);
+
+//        t.stop();
+//        if (grideye_num == GEYE_RIGHT)
+//        printf("The time taken was %d useconds\n\r", t.read_us());
 
 #if ENABLE_RGB_LEDMATRIX
 

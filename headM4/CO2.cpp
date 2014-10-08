@@ -18,6 +18,8 @@ static Thread *tCO2Health;  ///<<Thread pointer for CO2HealthTask()
  */
 static Queue<uint8_t, 19> CO2queue;
 
+Timer t;
+
 void CO2Init(PinName tx, PinName rx) {
     //Check comment about sdram in Doxygen main page before using new
 
@@ -36,6 +38,8 @@ void CO2Trigger() {
     for (int i = 0; i < 7; ++i) {
         co2uart->putcNB(co2TransmitBuffer[i]);  //Message must be maximum 16 bytes (FIFO size)
     }
+    t.reset();
+    t.start();
 }
 
 void RX_isr() {
@@ -60,12 +64,17 @@ void CO2ReceiverTask(void const *args) {
     uint8_t CO2SensorError = 0;
     while (1) {
         osEvent evt = CO2queue.get();   //If queue empty, stops here and lets other threads run
+
         int recv_char = evt.value.v;    //Received character from CO2UART
         if (state > 0 && state <= 7)
             ChecksumCalculated += recv_char;
         switch (state) {
         case 0:
             if (recv_char == DLE) {
+                t.stop();
+                printf("The time taken was %d useconds\n\r", t.read_us());
+//                t.reset();
+//                t.start();
                 DATaPacket = 0;
                 NAKPacket = 0;
                 StatusError = 0;
@@ -160,6 +169,9 @@ void CO2ReceiverTask(void const *args) {
                 CO2SensorError = 1;
             if (!CO2SensorError)
                 CO2valueSet(GasReading);
+//            t.stop();
+//            printf("The time taken was %d useconds\n\r", t.read_us());
+
             state = 0;
             break;
         }
@@ -176,8 +188,14 @@ void CO2SchedulerTask(void const *args) {
     while (true) {
         clearHealthyCO2();
 
-        if (CO2enabled())
+        if (CO2enabled()) {
+//            t.reset();
+//            t.start();
             CO2Trigger();
+//            t.stop();
+//            printf("The time taken was %d useconds\n\r", t.read_us());
+        }
+
 
         //The readings in the sensor are calculated every 500ms which is the rate of the infrared source within the
         //-> sensor. During the cycles when the signals are being tracked, the sensor will not respond to the
