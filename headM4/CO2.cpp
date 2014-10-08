@@ -25,7 +25,7 @@ void CO2Init(PinName tx, PinName rx) {
 
     co2uart = new SerialNB(tx, rx);
     co2uart->baud(38400);   //Baud 38400, 8N1
-    co2uart->attach(&RX_isr, Serial::RxIrq);
+//    co2uart->attach(&RX_isr, Serial::RxIrq);
 
     tCO2 = new Thread(CO2ReceiverTask);
     tCO2Health = new Thread(CO2HealthTask);
@@ -34,18 +34,38 @@ void CO2Init(PinName tx, PinName rx) {
 void CO2Trigger() {
     uint8_t co2TransmitBuffer[7] = { DLE, RD, Var_ID, DLE, EOFF, Checksum_hi,
     Checksum_lo };
-
+//    t.reset();
+//    t.start();
     for (int i = 0; i < 7; ++i) {
         co2uart->putcNB(co2TransmitBuffer[i]);  //Message must be maximum 16 bytes (FIFO size)
     }
-    t.reset();
-    t.start();
+//    t.stop();
+//    printf("The time taken was %d useconds\n\r", t.read_us());
+t.reset();
+t.start();
+    uint8_t CO2recv[19];
+    for (int i = 0; i < 15; ++i) {
+        CO2recv[i] = co2uart->getc();
+        if (i==0){
+//            t.reset();
+//            t.start();
+            t.stop();
+            printf("The time taken was %d useconds\n\r", t.read_us());
+        }
+    }
+//    printf("The time taken was %d useconds\n\r", t.read_us());
+
+    for (int i = 0; i < 15; ++i) {
+        CO2queue.put((uint8_t *) CO2recv[i]);
+    }
+//    t.stop();
+//    printf("The time taken was %d useconds\n\r", t.read_us());
 }
 
 void RX_isr() {
-    uint8_t CO2recv = co2uart->getcNB();    //Reading UnRBR clears the interrupt. If we don't clear it
-    //->the ISR would retrigger infinitely.
-    CO2queue.put((uint8_t *) CO2recv);
+//    uint8_t CO2recv = co2uart->getcNB();    //Reading UnRBR clears the interrupt. If we don't clear it
+//    //->the ISR would retrigger infinitely.
+//    CO2queue.put((uint8_t *) CO2recv);
 }
 
 void CO2ReceiverTask(void const *args) {
@@ -71,8 +91,8 @@ void CO2ReceiverTask(void const *args) {
         switch (state) {
         case 0:
             if (recv_char == DLE) {
-                t.stop();
-                printf("The time taken was %d useconds\n\r", t.read_us());
+//                t.stop();
+//                printf("The time taken was %d useconds\n\r", t.read_us());
 //                t.reset();
 //                t.start();
                 DATaPacket = 0;
@@ -203,7 +223,7 @@ void CO2SchedulerTask(void const *args) {
         //->  command to clear the queue. It is not suggested to pool the sensor more often than 500ms. The time for
         //-> the sensor to respond may also vary by a few ms depends on the internal operations. @official response
         //This means it will take a random time up to 500ms for the sensor to answer.
-        Thread::wait(500);
+        Thread::wait(500*2);
 
         Thread::wait(100);  //Timeout time.
 
