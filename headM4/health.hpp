@@ -32,7 +32,7 @@
 #define WDRESET 1   ///<Watchdog reset enable bit
 
 /** @brief Sets the maximum number of times a sensor can fail to respond before it is disabled, max 255 */
-#define DISABLE_COUNTDOWN 100
+#define DISABLE_COUNTDOWN 255
 
 /** @brief Initializes stuff related with health monitoring
  *

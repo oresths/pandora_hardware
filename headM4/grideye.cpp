@@ -230,7 +230,7 @@ void GridEYESchedulerTask(void const *args) {
         if (GridEYEenabled(GEYE_LEFT))
             tGridEYELeft->signal_set(GRIDEYE_I2C_SIGNAL);
 
-        Thread::wait(2);
+//        Thread::wait(2);
         if (GridEYEenabled(GEYE_RIGHT))
             tGridEYERight->signal_set(GRIDEYE_I2C_SIGNAL);
 
@@ -252,11 +252,11 @@ void GridEYESchedulerTask(void const *args) {
         //This means it will take a random time up to 500ms for the sensor to answer.
 //        Thread::wait(500);
 
-        Thread::wait(4);  //Timeout time.
+        Thread::wait(6);  //Timeout time.
 
         tGridEYEHealth->signal_set(HEALTH_SIGNAL);
         tCO2Health->signal_set(HEALTH_SIGNAL);
 
-        Thread::wait(2);
+        Thread::wait(1);
     }
 }
